@@ -1,0 +1,7 @@
+databaseChangeLog:
+  - changeSet:
+      id: 001-create-users-table
+      author: j0797
+      changes:
+        - sqlFile:
+            path: db/changelog/scripts/001-create-users-table.sql
