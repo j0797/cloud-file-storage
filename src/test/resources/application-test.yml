@@ -1,0 +1,5 @@
+minio:
+  url: http://localhost:9000
+  root:
+    user: minioadmin
+    password: minioadmin123
