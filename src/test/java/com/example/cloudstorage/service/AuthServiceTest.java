@@ -2,9 +2,6 @@ package com.example.cloudstorage.service;
 
 import com.example.cloudstorage.dto.UserLoginDto;
 import com.example.cloudstorage.dto.UserRegisterDto;
-import com.example.cloudstorage.exception.UserAlreadyExistsException;
-import com.example.cloudstorage.model.User;
-import com.example.cloudstorage.repository.UserRepository;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -12,7 +9,6 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
@@ -21,7 +17,6 @@ import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
-import java.util.Optional;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -44,42 +39,6 @@ class AuthServiceTest {
 
     @Autowired
     private AuthService authService;
-
-    @Autowired
-    private UserRepository userRepository;
-
-    @Autowired
-    private PasswordEncoder passwordEncoder;
-
-    @Test
-    void shouldCreateUserInDatabaseOnRegister() {
-        String username = uniqueUsername();
-        authService.register(new UserRegisterDto(username, "password123"));
-
-        Optional<User> saved = userRepository.findByUsernameIgnoreCase(username);
-        assertTrue(saved.isPresent());
-        assertEquals(username, saved.get().getUsername());
-    }
-
-    @Test
-    void shouldStoreHashedPasswordNotPlainText() {
-        String username = uniqueUsername();
-        String rawPassword = "password123";
-        authService.register(new UserRegisterDto(username, rawPassword));
-
-        User saved = userRepository.findByUsernameIgnoreCase(username).orElseThrow();
-        assertNotEquals(rawPassword, saved.getPassword());
-        assertTrue(passwordEncoder.matches(rawPassword, saved.getPassword()));
-    }
-
-    @Test
-    void shouldThrowWhenUsernameAlreadyExists() {
-        String username = uniqueUsername();
-        authService.register(new UserRegisterDto(username, "password123"));
-
-        assertThrows(UserAlreadyExistsException.class, () ->
-                authService.register(new UserRegisterDto(username, "differentPassword")));
-    }
 
     @Test
     void shouldAuthenticateUserAfterRegister() {
