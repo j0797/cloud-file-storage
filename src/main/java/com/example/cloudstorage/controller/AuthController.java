@@ -7,7 +7,6 @@ import com.example.cloudstorage.service.AuthService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -30,10 +29,5 @@ public class AuthController {
     public ResponseEntity<AuthResponse> signIn(@Valid @RequestBody UserLoginDto userLoginDto) {
         authService.authenticate(userLoginDto);
         return ResponseEntity.ok(new AuthResponse(userLoginDto.username()));
-    }
-
-    @GetMapping("/user/me")
-    public ResponseEntity<AuthResponse> me(Authentication authentication) {
-        return ResponseEntity.ok(new AuthResponse(authentication.getName()));
     }
 }
