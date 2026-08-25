@@ -1,5 +1,6 @@
 minio:
   url: http://localhost:9000
+  bucket-name: test-bucket
   root:
     user: minioadmin
     password: minioadmin123
