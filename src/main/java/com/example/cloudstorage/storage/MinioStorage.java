@@ -1,5 +1,6 @@
 package com.example.cloudstorage.storage;
 
+import com.example.cloudstorage.domain.StorageResource;
 import com.example.cloudstorage.exception.StorageException;
 import io.minio.*;
 import io.minio.errors.ErrorResponseException;

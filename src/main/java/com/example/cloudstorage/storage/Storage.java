@@ -1,5 +1,7 @@
 package com.example.cloudstorage.storage;
 
+import com.example.cloudstorage.domain.StorageResource;
+
 import java.io.InputStream;
 import java.util.List;
 import java.util.Optional;

@@ -1,4 +1,4 @@
-package com.example.cloudstorage.storage;
+package com.example.cloudstorage.domain;
 
 import java.time.Instant;
 
