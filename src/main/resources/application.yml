@@ -16,6 +16,7 @@ spring:
 
 minio:
   url: ${MINIO_URL}
+  bucket-name: ${MINIO_BUCKET_NAME:user-files}
   root:
     user: ${MINIO_ROOT_USER}
     password: ${MINIO_ROOT_PASSWORD}
