@@ -1,0 +1,18 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/${DB_NAME:cloud_storage_db}
+    username: ${DB_USERNAME:postgres_user}
+    password: ${DB_PASSWORD:postgres_password}
+
+minio:
+  url: ${MINIO_URL:http://localhost:9000}
+  root:
+    user: ${MINIO_ROOT_USER:minioadmin}
+    password: ${MINIO_ROOT_PASSWORD:minioadmin123}
+
+logging:
+  level:
+    root: INFO
+    com.example.cloudstorage: DEBUG
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss.SSS} %-5level [%thread] %logger{40} - %msg%n"

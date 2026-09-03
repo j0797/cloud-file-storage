@@ -1,0 +1,20 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://${DB_HOST}:${DB_PORT}/${DB_NAME}
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
+
+minio:
+  url: https://${MINIO_HOST}:${MINIO_API_PORT}
+  root:
+    user: ${MINIO_ROOT_USER}
+    password: ${MINIO_ROOT_PASSWORD}
+
+logging:
+  level:
+    root: INFO
+  file:
+    name: /app/logs/cloud-file-storage.log
+  logback:
+    rollingpolicy:
+      file-name-pattern: /app/logs/archive/cloud-file-storage.%d{yyyy-MM-dd}.%i.log.gz
