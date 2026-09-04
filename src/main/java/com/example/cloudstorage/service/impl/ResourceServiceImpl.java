@@ -51,12 +51,16 @@ public class ResourceServiceImpl implements ResourceService {
     }
 
     @Override
-    public List<ResourceInfoDto> listDirectory(Long userId, String path) {
-        throw new UnsupportedOperationException("Not implemented yet");
+    public ResourceInfoDto getResourceInfo(Long userId, String path) {
+        ResourcePath resourcePath = new ResourcePath(path);
+        String storageKey = pathResolver.toStoragePath(userId, resourcePath.path());
+        StorageResource resource = storage.getInfo(storageKey)
+                .orElseThrow(() -> new ResourceNotFoundException("Resource not found: " + path));
+        return resourceMapper.toDto(resource, userId);
     }
 
     @Override
-    public ResourceInfoDto getResourceInfo(Long userId, String path) {
+    public List<ResourceInfoDto> listDirectory(Long userId, String path) {
         throw new UnsupportedOperationException("Not implemented yet");
     }
 

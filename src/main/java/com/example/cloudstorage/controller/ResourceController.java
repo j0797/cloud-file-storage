@@ -26,4 +26,11 @@ public class ResourceController {
         ResourceInfoDto result = resourceService.createDirectory(userId, path);
         return ResponseEntity.status(HttpStatus.CREATED).body(result);
     }
+
+    @GetMapping("/resource")
+    public ResponseEntity<ResourceInfoDto> getResourceInfo(@RequestParam String path) {
+        Long userId = userProvider.getCurrentUserId();
+        ResourceInfoDto result = resourceService.getResourceInfo(userId, path);
+        return ResponseEntity.ok(result);
+    }
 }
