@@ -10,6 +10,7 @@ import org.springframework.stereotype.Component;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -141,13 +142,10 @@ public class MinioStorage implements Storage {
                 if (path.equals(prefix) && path.endsWith("/")) {
                     continue;
                 }
-                boolean isDir = path.endsWith("/");
-                resources.add(new StorageResource(
-                        path,
-                        isDir ? null : item.size(),
-                        isDir,
-                        item.lastModified().toInstant()
-                ));
+                boolean isDir = path.endsWith("/") || item.isDir();
+                Long size = isDir ? null : item.size();
+                Instant lastModified = isDir ? null : item.lastModified().toInstant();
+                resources.add(new StorageResource(path, size, isDir, lastModified));
             }
         } catch (Exception e) {
             throw new StorageException("Failed to list objects: " + prefix, e);
