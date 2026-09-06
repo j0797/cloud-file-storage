@@ -13,6 +13,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 public class ResourceServiceImpl implements ResourceService {
@@ -61,7 +62,18 @@ public class ResourceServiceImpl implements ResourceService {
 
     @Override
     public List<ResourceInfoDto> listDirectory(Long userId, String path) {
-        throw new UnsupportedOperationException("Not implemented yet");
+        ResourcePath resourcePath = new ResourcePath(path);
+        ensureDirectory(resourcePath);
+
+        String storageKey = pathResolver.toStoragePath(userId, path);
+        if (!storage.exists(storageKey)) {
+            throw new ResourceNotFoundException("Directory not found: " + path);
+        }
+
+        List<StorageResource> resources = storage.list(storageKey, false);
+        return resources.stream()
+                .map(resource -> resourceMapper.toDto(resource, userId))
+                .collect(Collectors.toList());
     }
 
     @Override

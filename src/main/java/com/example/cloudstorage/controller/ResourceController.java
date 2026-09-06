@@ -7,6 +7,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/api")
 public class ResourceController {
@@ -31,6 +33,13 @@ public class ResourceController {
     public ResponseEntity<ResourceInfoDto> getResourceInfo(@RequestParam String path) {
         Long userId = userProvider.getCurrentUserId();
         ResourceInfoDto result = resourceService.getResourceInfo(userId, path);
+        return ResponseEntity.ok(result);
+    }
+
+    @GetMapping("/directory")
+    public ResponseEntity<List<ResourceInfoDto>> listDirectory(@RequestParam String path) {
+        Long userId = userProvider.getCurrentUserId();
+        List<ResourceInfoDto> result = resourceService.listDirectory(userId, path);
         return ResponseEntity.ok(result);
     }
 }
