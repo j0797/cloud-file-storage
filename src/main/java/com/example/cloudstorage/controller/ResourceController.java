@@ -42,4 +42,11 @@ public class ResourceController {
         List<ResourceInfoDto> result = resourceService.listDirectory(userId, path);
         return ResponseEntity.ok(result);
     }
+
+    @DeleteMapping("/resource")
+    public ResponseEntity<Void> deleteResource(@RequestParam String path) {
+        Long userId = userProvider.getCurrentUserId();
+        resourceService.deleteResource(userId, path);
+        return ResponseEntity.noContent().build();
+    }
 }

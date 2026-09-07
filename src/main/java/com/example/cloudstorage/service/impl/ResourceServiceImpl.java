@@ -77,12 +77,28 @@ public class ResourceServiceImpl implements ResourceService {
     }
 
     @Override
-    public List<ResourceInfoDto> uploadFile(Long userId, String path, MultipartFile[] files) {
-        throw new UnsupportedOperationException("Not implemented yet");
+    public void deleteResource(Long userId, String path) {
+        ResourcePath resourcePath = new ResourcePath(path);
+        String storageKey = pathResolver.toStoragePath(userId, path);
+
+        if (!storage.exists(storageKey)) {
+            throw new ResourceNotFoundException("Resource not found: " + path);
+        }
+
+        if (resourcePath.isDirectory()) {
+            List<StorageResource> children = storage.list(storageKey, true);
+            List<String> keysToDelete = children.stream()
+                    .map(StorageResource::path)
+                    .collect(Collectors.toList());
+            keysToDelete.add(storageKey);
+            storage.deleteObjects(keysToDelete);
+        } else {
+            storage.delete(storageKey);
+        }
     }
 
     @Override
-    public void deleteResource(Long userId, String path) {
+    public List<ResourceInfoDto> uploadFile(Long userId, String path, MultipartFile[] files) {
         throw new UnsupportedOperationException("Not implemented yet");
     }
 
