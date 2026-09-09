@@ -155,17 +155,26 @@ public class ResourceServiceImpl implements ResourceService {
     }
 
     @Override
+    public List<ResourceInfoDto> searchResources(Long userId, String query) {
+        if (query == null || query.isBlank()) {
+            throw new InvalidPathException("Search query cannot be empty");
+        }
+        String userPrefix = pathResolver.toStoragePath(userId, "");
+        List<StorageResource> allResources = storage.list(userPrefix, true);
+        String lowerQuery = query.toLowerCase();
+        return allResources.stream()
+                .map(resource -> resourceMapper.toDto(resource, userId))
+                .filter(dto -> dto.name().toLowerCase().contains(lowerQuery))
+                .collect(Collectors.toList());
+    }
+
+    @Override
     public InputStreamResource downloadResource(Long userId, String path) {
         throw new UnsupportedOperationException("Not implemented yet");
     }
 
     @Override
     public ResourceInfoDto moveResource(Long userId, String fromPath, String toPath) {
-        throw new UnsupportedOperationException("Not implemented yet");
-    }
-
-    @Override
-    public List<ResourceInfoDto> searchResources(Long userId, String query) {
         throw new UnsupportedOperationException("Not implemented yet");
     }
 

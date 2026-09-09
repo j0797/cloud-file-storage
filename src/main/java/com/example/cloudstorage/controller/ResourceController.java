@@ -59,4 +59,11 @@ public class ResourceController {
         List<ResourceInfoDto> result = resourceService.uploadFile(userId, path, files);
         return ResponseEntity.status(HttpStatus.CREATED).body(result);
     }
+
+    @GetMapping("/resource/search")
+    public ResponseEntity<List<ResourceInfoDto>> searchResources(@RequestParam String query) {
+        Long userId = userProvider.getCurrentUserId();
+        List<ResourceInfoDto> result = resourceService.searchResources(userId, query);
+        return ResponseEntity.ok(result);
+    }
 }
