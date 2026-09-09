@@ -6,6 +6,7 @@ import com.example.cloudstorage.service.ResourceService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
@@ -48,5 +49,14 @@ public class ResourceController {
         Long userId = userProvider.getCurrentUserId();
         resourceService.deleteResource(userId, path);
         return ResponseEntity.noContent().build();
+    }
+
+    @PostMapping("/resource")
+    public ResponseEntity<List<ResourceInfoDto>> uploadFile(
+            @RequestParam String path,
+            @RequestPart("file") MultipartFile[] files) {
+        Long userId = userProvider.getCurrentUserId();
+        List<ResourceInfoDto> result = resourceService.uploadFile(userId, path, files);
+        return ResponseEntity.status(HttpStatus.CREATED).body(result);
     }
 }

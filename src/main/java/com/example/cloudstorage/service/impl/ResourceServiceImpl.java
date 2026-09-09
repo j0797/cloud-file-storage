@@ -12,7 +12,12 @@ import org.springframework.core.io.InputStreamResource;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
@@ -99,7 +104,54 @@ public class ResourceServiceImpl implements ResourceService {
 
     @Override
     public List<ResourceInfoDto> uploadFile(Long userId, String path, MultipartFile[] files) {
-        throw new UnsupportedOperationException("Not implemented yet");
+        if (files == null || files.length == 0) {
+            throw new InvalidPathException("No files to upload");
+        }
+
+        if (!path.endsWith("/") && !path.isEmpty()) {
+            path += "/";
+        }
+
+        ResourcePath resourcePath = new ResourcePath(path);
+        if (!resourcePath.isDirectory()) {
+            throw new InvalidPathException("Upload path must be a directory (end with '/')");
+        }
+
+        String folderKey = pathResolver.toStoragePath(userId, path);
+        if (!storage.exists(folderKey)) {
+            throw new ResourceNotFoundException("Target directory does not exist: " + path);
+        }
+
+        Map<String, MultipartFile> filesToUpload = new LinkedHashMap<>();
+        for (MultipartFile file : files) {
+            String originalName = file.getOriginalFilename();
+            if (originalName == null || originalName.isBlank()) {
+                continue;
+            }
+
+            String fileKey = folderKey + originalName;
+            if (storage.exists(fileKey)) {
+                throw new ResourceAlreadyExistsException("File already exists: " + originalName);
+            }
+            filesToUpload.put(fileKey, file);
+        }
+
+        List<ResourceInfoDto> uploaded = new ArrayList<>();
+        for (var entry : filesToUpload.entrySet()) {
+            String fileKey = entry.getKey();
+            MultipartFile file = entry.getValue();
+
+            try (InputStream inputStream = file.getInputStream()) {
+                storage.upload(fileKey, inputStream, file.getSize(), file.getContentType());
+            } catch (IOException e) {
+                throw new FileUploadException("Failed to read file: " + file.getOriginalFilename(), e);
+            }
+
+            StorageResource resource = storage.getInfo(fileKey)
+                    .orElseThrow(() -> new FileUploadException("Failed to get info for uploaded file: " + file.getOriginalFilename()));
+            uploaded.add(resourceMapper.toDto(resource, userId));
+        }
+        return uploaded;
     }
 
     @Override
