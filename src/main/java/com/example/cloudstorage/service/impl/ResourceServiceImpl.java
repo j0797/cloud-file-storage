@@ -37,18 +37,9 @@ public class ResourceServiceImpl implements ResourceService {
     public ResourceInfoDto createDirectory(Long userId, String path) {
         ResourcePath resourcePath = new ResourcePath(path);
         ensureDirectory(resourcePath);
-
         String folderKey = pathResolver.toStoragePath(userId, path);
         ensureNotExists(folderKey);
-
-        String parentPath = resourcePath.parentPath();
-        if (!parentPath.isEmpty()) {
-            String parentKey = pathResolver.toStoragePath(userId, parentPath);
-            if (!storage.exists(parentKey)) {
-                throw new ResourceNotFoundException("Parent directory does not exist");
-            }
-        }
-
+        ensureParentExists(userId, resourcePath.parentPath());
         storage.createDirectory(folderKey);
 
         StorageResource resource = storage.getInfo(folderKey)
@@ -69,12 +60,8 @@ public class ResourceServiceImpl implements ResourceService {
     public List<ResourceInfoDto> listDirectory(Long userId, String path) {
         ResourcePath resourcePath = new ResourcePath(path);
         ensureDirectory(resourcePath);
-
         String storageKey = pathResolver.toStoragePath(userId, path);
-        if (!storage.exists(storageKey)) {
-            throw new ResourceNotFoundException("Directory not found: " + path);
-        }
-
+        ensureExists(storageKey, "Directory not found: " + path);
         List<StorageResource> resources = storage.list(storageKey, false);
         return resources.stream()
                 .map(resource -> resourceMapper.toDto(resource, userId))
@@ -85,10 +72,7 @@ public class ResourceServiceImpl implements ResourceService {
     public void deleteResource(Long userId, String path) {
         ResourcePath resourcePath = new ResourcePath(path);
         String storageKey = pathResolver.toStoragePath(userId, path);
-
-        if (!storage.exists(storageKey)) {
-            throw new ResourceNotFoundException("Resource not found: " + path);
-        }
+        ensureExists(storageKey, "Resource not found: " + path);
 
         if (resourcePath.isDirectory()) {
             List<StorageResource> children = storage.list(storageKey, true);
@@ -118,9 +102,7 @@ public class ResourceServiceImpl implements ResourceService {
         }
 
         String folderKey = pathResolver.toStoragePath(userId, path);
-        if (!storage.exists(folderKey)) {
-            throw new ResourceNotFoundException("Target directory does not exist: " + path);
-        }
+        ensureExists(folderKey, "Target directory does not exist: " + path);
 
         Map<String, MultipartFile> filesToUpload = new LinkedHashMap<>();
         for (MultipartFile file : files) {
@@ -174,7 +156,6 @@ public class ResourceServiceImpl implements ResourceService {
         ResourcePath toResourcePath = new ResourcePath(toPath);
         String fromKey = pathResolver.toStoragePath(userId, fromPath);
         String toKey = pathResolver.toStoragePath(userId, toPath);
-
         validateMove(fromResourcePath, toResourcePath, fromKey, toKey, userId, toResourcePath.parentPath());
 
         if (fromResourcePath.isDirectory()) {
@@ -183,7 +164,6 @@ public class ResourceServiceImpl implements ResourceService {
             storage.copy(fromKey, toKey);
             storage.delete(fromKey);
         }
-
         return getResourceInfo(userId, toPath);
     }
 
@@ -198,26 +178,34 @@ public class ResourceServiceImpl implements ResourceService {
         }
     }
 
+    private void ensureExists(String storageKey, String message) {
+        if (!storage.exists(storageKey)) {
+            throw new ResourceNotFoundException(message);
+        }
+    }
+
     private void ensureNotExists(String storageKey) {
         if (storage.exists(storageKey)) {
             throw new ResourceAlreadyExistsException("Resource already exists");
         }
     }
 
+    private void ensureParentExists(Long userId, String parentPath) {
+        if (parentPath.isEmpty()) {
+            return;
+        }
+        String parentKey = pathResolver.toStoragePath(userId, parentPath);
+        ensureExists(parentKey, "Parent directory does not exist: " + parentPath);
+    }
+
     private void validateMove(ResourcePath fromResourcePath, ResourcePath toResourcePath,
                               String fromKey, String toKey, Long userId, String toParent) {
-        if (!storage.exists(fromKey)) {
-            throw new ResourceNotFoundException("Source resource not found: " + fromResourcePath.path());
-        }
+
+        ensureExists(fromKey, "Source resource not found: " + fromResourcePath.path());
         if (storage.exists(toKey)) {
             throw new ResourceAlreadyExistsException("Destination already exists: " + toResourcePath.path());
         }
-        if (!toParent.isEmpty()) {
-            String toParentKey = pathResolver.toStoragePath(userId, toParent);
-            if (!storage.exists(toParentKey)) {
-                throw new ResourceNotFoundException("Parent directory does not exist: " + toParent);
-            }
-        }
+        ensureParentExists(userId, toParent);
         if (fromResourcePath.isDirectory() != toResourcePath.isDirectory()) {
             throw new InvalidPathException("Source and destination must be of the same type");
         }
