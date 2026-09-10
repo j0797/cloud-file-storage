@@ -66,4 +66,13 @@ public class ResourceController {
         List<ResourceInfoDto> result = resourceService.searchResources(userId, query);
         return ResponseEntity.ok(result);
     }
+
+    @PostMapping("/resource/move")
+    public ResponseEntity<ResourceInfoDto> moveResource(
+            @RequestParam String from,
+            @RequestParam String to) {
+        Long userId = userProvider.getCurrentUserId();
+        ResourceInfoDto result = resourceService.moveResource(userId, from, to);
+        return ResponseEntity.ok(result);
+    }
 }

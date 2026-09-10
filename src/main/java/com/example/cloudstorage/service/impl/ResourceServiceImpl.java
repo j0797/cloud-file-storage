@@ -169,12 +169,26 @@ public class ResourceServiceImpl implements ResourceService {
     }
 
     @Override
-    public InputStreamResource downloadResource(Long userId, String path) {
-        throw new UnsupportedOperationException("Not implemented yet");
+    public ResourceInfoDto moveResource(Long userId, String fromPath, String toPath) {
+        ResourcePath fromResourcePath = new ResourcePath(fromPath);
+        ResourcePath toResourcePath = new ResourcePath(toPath);
+        String fromKey = pathResolver.toStoragePath(userId, fromPath);
+        String toKey = pathResolver.toStoragePath(userId, toPath);
+
+        validateMove(fromResourcePath, toResourcePath, fromKey, toKey, userId, toResourcePath.parentPath());
+
+        if (fromResourcePath.isDirectory()) {
+            moveDirectory(fromKey, toKey);
+        } else {
+            storage.copy(fromKey, toKey);
+            storage.delete(fromKey);
+        }
+
+        return getResourceInfo(userId, toPath);
     }
 
     @Override
-    public ResourceInfoDto moveResource(Long userId, String fromPath, String toPath) {
+    public InputStreamResource downloadResource(Long userId, String path) {
         throw new UnsupportedOperationException("Not implemented yet");
     }
 
@@ -188,5 +202,41 @@ public class ResourceServiceImpl implements ResourceService {
         if (storage.exists(storageKey)) {
             throw new ResourceAlreadyExistsException("Resource already exists");
         }
+    }
+
+    private void validateMove(ResourcePath fromResourcePath, ResourcePath toResourcePath,
+                              String fromKey, String toKey, Long userId, String toParent) {
+        if (!storage.exists(fromKey)) {
+            throw new ResourceNotFoundException("Source resource not found: " + fromResourcePath.path());
+        }
+        if (storage.exists(toKey)) {
+            throw new ResourceAlreadyExistsException("Destination already exists: " + toResourcePath.path());
+        }
+        if (!toParent.isEmpty()) {
+            String toParentKey = pathResolver.toStoragePath(userId, toParent);
+            if (!storage.exists(toParentKey)) {
+                throw new ResourceNotFoundException("Parent directory does not exist: " + toParent);
+            }
+        }
+        if (fromResourcePath.isDirectory() != toResourcePath.isDirectory()) {
+            throw new InvalidPathException("Source and destination must be of the same type");
+        }
+        if (fromResourcePath.isDirectory() && toKey.startsWith(fromKey)) {
+            throw new InvalidPathException("Cannot move a directory into itself");
+        }
+    }
+
+    private void moveDirectory(String fromKey, String toKey) {
+        List<StorageResource> children = storage.list(fromKey, true);
+        List<String> keysToDelete = new ArrayList<>();
+        storage.copy(fromKey, toKey);
+        keysToDelete.add(fromKey);
+
+        for (StorageResource child : children) {
+            String relativePath = child.path().substring(fromKey.length());
+            storage.copy(child.path(), toKey + relativePath);
+            keysToDelete.add(child.path());
+        }
+        storage.deleteObjects(keysToDelete);
     }
 }
