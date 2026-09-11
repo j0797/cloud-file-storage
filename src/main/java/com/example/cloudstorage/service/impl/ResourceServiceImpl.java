@@ -38,7 +38,7 @@ public class ResourceServiceImpl implements ResourceService {
         ResourcePath resourcePath = new ResourcePath(path);
         ensureDirectory(resourcePath);
         String folderKey = pathResolver.toStoragePath(userId, path);
-        ensureNotExists(folderKey);
+        ensureNotExists(folderKey, "Resource already exists");
         ensureParentExists(userId, resourcePath.parentPath());
         storage.createDirectory(folderKey);
 
@@ -91,49 +91,16 @@ public class ResourceServiceImpl implements ResourceService {
         if (files == null || files.length == 0) {
             throw new InvalidPathException("No files to upload");
         }
-
         if (!path.endsWith("/") && !path.isEmpty()) {
             path += "/";
         }
 
         ResourcePath resourcePath = new ResourcePath(path);
-        if (!resourcePath.isDirectory()) {
-            throw new InvalidPathException("Upload path must be a directory (end with '/')");
-        }
-
+        ensureDirectory(resourcePath);
         String folderKey = pathResolver.toStoragePath(userId, path);
         ensureExists(folderKey, "Target directory does not exist: " + path);
-
-        Map<String, MultipartFile> filesToUpload = new LinkedHashMap<>();
-        for (MultipartFile file : files) {
-            String originalName = file.getOriginalFilename();
-            if (originalName == null || originalName.isBlank()) {
-                continue;
-            }
-
-            String fileKey = folderKey + originalName;
-            if (storage.exists(fileKey)) {
-                throw new ResourceAlreadyExistsException("File already exists: " + originalName);
-            }
-            filesToUpload.put(fileKey, file);
-        }
-
-        List<ResourceInfoDto> uploaded = new ArrayList<>();
-        for (var entry : filesToUpload.entrySet()) {
-            String fileKey = entry.getKey();
-            MultipartFile file = entry.getValue();
-
-            try (InputStream inputStream = file.getInputStream()) {
-                storage.upload(fileKey, inputStream, file.getSize(), file.getContentType());
-            } catch (IOException e) {
-                throw new FileUploadException("Failed to read file: " + file.getOriginalFilename(), e);
-            }
-
-            StorageResource resource = storage.getInfo(fileKey)
-                    .orElseThrow(() -> new FileUploadException("Failed to get info for uploaded file: " + file.getOriginalFilename()));
-            uploaded.add(resourceMapper.toDto(resource, userId));
-        }
-        return uploaded;
+        Map<String, MultipartFile> filesToUpload = buildUploadPlan(folderKey, files);
+        return uploadFiles(filesToUpload, userId);
     }
 
     @Override
@@ -184,9 +151,9 @@ public class ResourceServiceImpl implements ResourceService {
         }
     }
 
-    private void ensureNotExists(String storageKey) {
+    private void ensureNotExists(String storageKey, String message) {
         if (storage.exists(storageKey)) {
-            throw new ResourceAlreadyExistsException("Resource already exists");
+            throw new ResourceAlreadyExistsException(message);
         }
     }
 
@@ -202,9 +169,7 @@ public class ResourceServiceImpl implements ResourceService {
                               String fromKey, String toKey, Long userId, String toParent) {
 
         ensureExists(fromKey, "Source resource not found: " + fromResourcePath.path());
-        if (storage.exists(toKey)) {
-            throw new ResourceAlreadyExistsException("Destination already exists: " + toResourcePath.path());
-        }
+        ensureNotExists(toKey, "Destination already exists: " + toResourcePath.path());
         ensureParentExists(userId, toParent);
         if (fromResourcePath.isDirectory() != toResourcePath.isDirectory()) {
             throw new InvalidPathException("Source and destination must be of the same type");
@@ -226,5 +191,39 @@ public class ResourceServiceImpl implements ResourceService {
             keysToDelete.add(child.path());
         }
         storage.deleteObjects(keysToDelete);
+    }
+
+    private Map<String, MultipartFile> buildUploadPlan(String folderKey, MultipartFile[] files) {
+        Map<String, MultipartFile> filesToUpload = new LinkedHashMap<>();
+        for (MultipartFile file : files) {
+            String originalName = file.getOriginalFilename();
+            if (originalName == null || originalName.isBlank()) {
+                continue;
+            }
+            String fileKey = folderKey + originalName;
+            ensureNotExists(fileKey, "File already exists: " + originalName);
+            filesToUpload.put(fileKey, file);
+        }
+        return filesToUpload;
+    }
+
+    private List<ResourceInfoDto> uploadFiles(Map<String, MultipartFile> files, Long userId) {
+        List<ResourceInfoDto> uploaded = new ArrayList<>();
+        for (var entry : files.entrySet()) {
+            String fileKey = entry.getKey();
+            MultipartFile file = entry.getValue();
+
+            try (InputStream inputStream = file.getInputStream()) {
+                storage.upload(fileKey, inputStream, file.getSize(), file.getContentType());
+            } catch (IOException e) {
+                throw new FileUploadException("Failed to read file: " + file.getOriginalFilename(), e);
+            }
+
+            StorageResource resource = storage.getInfo(fileKey)
+                    .orElseThrow(() -> new FileUploadException(
+                            "Failed to get info for uploaded file: " + file.getOriginalFilename()));
+            uploaded.add(resourceMapper.toDto(resource, userId));
+        }
+        return uploaded;
     }
 }
