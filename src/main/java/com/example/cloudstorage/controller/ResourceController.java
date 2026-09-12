@@ -1,9 +1,13 @@
 package com.example.cloudstorage.controller;
 
+import com.example.cloudstorage.domain.ResourcePath;
 import com.example.cloudstorage.dto.ResourceInfoDto;
 import com.example.cloudstorage.security.UserProvider;
 import com.example.cloudstorage.service.ResourceService;
+import org.springframework.core.io.InputStreamResource;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -74,5 +78,21 @@ public class ResourceController {
         Long userId = userProvider.getCurrentUserId();
         ResourceInfoDto result = resourceService.moveResource(userId, from, to);
         return ResponseEntity.ok(result);
+    }
+
+    @GetMapping("/resource/download")
+    public ResponseEntity<InputStreamResource> downloadResource(@RequestParam String path) {
+        Long userId = userProvider.getCurrentUserId();
+        InputStreamResource resource = resourceService.downloadResource(userId, path);
+
+        String filename = new ResourcePath(path).fileName();
+        if (path.endsWith("/")) {
+            filename += ".zip";
+        }
+
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + filename + "\"")
+                .contentType(MediaType.APPLICATION_OCTET_STREAM)
+                .body(resource);
     }
 }

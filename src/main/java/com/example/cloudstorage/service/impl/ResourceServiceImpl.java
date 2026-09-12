@@ -12,6 +12,8 @@ import org.springframework.core.io.InputStreamResource;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
@@ -19,6 +21,8 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 
 @Service
 public class ResourceServiceImpl implements ResourceService {
@@ -40,6 +44,7 @@ public class ResourceServiceImpl implements ResourceService {
         String folderKey = pathResolver.toStoragePath(userId, path);
         ensureNotExists(folderKey, "Resource already exists");
         ensureParentExists(userId, resourcePath.parentPath());
+
         storage.createDirectory(folderKey);
 
         StorageResource resource = storage.getInfo(folderKey)
@@ -136,7 +141,35 @@ public class ResourceServiceImpl implements ResourceService {
 
     @Override
     public InputStreamResource downloadResource(Long userId, String path) {
-        throw new UnsupportedOperationException("Not implemented yet");
+        ResourcePath resourcePath = new ResourcePath(path);
+        String storageKey = pathResolver.toStoragePath(userId, path);
+        ensureExists(storageKey, "Resource not found: " + path);
+
+        if (resourcePath.isDirectory()) {
+            return new InputStreamResource(zipDirectory(storageKey));
+        }
+        return new InputStreamResource(storage.download(storageKey));
+    }
+
+    private InputStream zipDirectory(String folderKey) {
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        try (ZipOutputStream zos = new ZipOutputStream(baos)) {
+            List<StorageResource> children = storage.list(folderKey, true);
+            for (StorageResource child : children) {
+                String entryName = child.path().substring(folderKey.length());
+                if (entryName.isEmpty()) continue;
+
+                zos.putNextEntry(new ZipEntry(entryName));
+                try (InputStream is = storage.download(child.path())) {
+                    is.transferTo(zos);
+                }
+                zos.closeEntry();
+            }
+            zos.finish();
+        } catch (IOException e) {
+            throw new StorageException("Failed to create ZIP archive for: " + folderKey, e);
+        }
+        return new ByteArrayInputStream(baos.toByteArray());
     }
 
     private void ensureDirectory(ResourcePath resourcePath) {
@@ -171,9 +204,11 @@ public class ResourceServiceImpl implements ResourceService {
         ensureExists(fromKey, "Source resource not found: " + fromResourcePath.path());
         ensureNotExists(toKey, "Destination already exists: " + toResourcePath.path());
         ensureParentExists(userId, toParent);
+
         if (fromResourcePath.isDirectory() != toResourcePath.isDirectory()) {
             throw new InvalidPathException("Source and destination must be of the same type");
         }
+
         if (fromResourcePath.isDirectory() && toKey.startsWith(fromKey)) {
             throw new InvalidPathException("Cannot move a directory into itself");
         }
