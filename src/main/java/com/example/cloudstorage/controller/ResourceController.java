@@ -26,25 +26,10 @@ public class ResourceController {
         this.userProvider = userProvider;
     }
 
-    @PostMapping("/directory")
-    public ResponseEntity<ResourceInfoDto> createDirectory(
-            @RequestParam String path) {
-        Long userId = userProvider.getCurrentUserId();
-        ResourceInfoDto result = resourceService.createDirectory(userId, path);
-        return ResponseEntity.status(HttpStatus.CREATED).body(result);
-    }
-
     @GetMapping("/resource")
     public ResponseEntity<ResourceInfoDto> getResourceInfo(@RequestParam String path) {
         Long userId = userProvider.getCurrentUserId();
         ResourceInfoDto result = resourceService.getResourceInfo(userId, path);
-        return ResponseEntity.ok(result);
-    }
-
-    @GetMapping("/directory")
-    public ResponseEntity<List<ResourceInfoDto>> listDirectory(@RequestParam String path) {
-        Long userId = userProvider.getCurrentUserId();
-        List<ResourceInfoDto> result = resourceService.listDirectory(userId, path);
         return ResponseEntity.ok(result);
     }
 
