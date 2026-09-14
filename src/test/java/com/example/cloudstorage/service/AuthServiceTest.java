@@ -2,6 +2,7 @@ package com.example.cloudstorage.service;
 
 import com.example.cloudstorage.dto.UserLoginDto;
 import com.example.cloudstorage.dto.UserRegisterDto;
+import com.example.cloudstorage.exception.UserAlreadyExistsException;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -79,6 +80,15 @@ class AuthServiceTest {
     void shouldThrowBadCredentialsWhenUsernameDoesNotExist() {
         assertThrows(BadCredentialsException.class, () ->
                 authService.authenticate(new UserLoginDto("nonexistent_user_xyz", "password123")));
+    }
+
+    @Test
+    void shouldThrowWhenRegisteringDuplicateUsername() {
+        String username = uniqueUsername();
+        authService.register(new UserRegisterDto(username, "password123"));
+
+        assertThrows(UserAlreadyExistsException.class,
+                () -> authService.register(new UserRegisterDto(username, "otherPassword")));
     }
 
     @AfterEach

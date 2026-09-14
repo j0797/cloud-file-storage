@@ -73,6 +73,35 @@ class UserServiceTest {
         );
     }
 
+    @Test
+    void shouldFindUserByUsername() {
+        String username = uniqueUsername();
+        userService.createUser(username, "password123");
+
+        assertTrue(userService.findByUsername(username).isPresent());
+    }
+
+    @Test
+    void shouldFindUserByUsernameIgnoreCase() {
+        String username = uniqueUsername();
+        userService.createUser(username, "password123");
+
+        assertTrue(userService.findByUsername(username.toUpperCase()).isPresent());
+    }
+
+    @Test
+    void shouldReturnEmptyWhenUserNotFound() {
+        assertTrue(userService.findByUsername("nonexistent_" + UUID.randomUUID()).isEmpty());
+    }
+
+    @Test
+    void shouldPreserveUsernameCase() {
+        String username = "John_" + UUID.randomUUID();
+        userService.createUser(username, "password123");
+
+        assertEquals(username, userService.findByUsername(username).orElseThrow().getUsername());
+    }
+
     private String uniqueUsername() {
         return "user_" + UUID.randomUUID();
     }
