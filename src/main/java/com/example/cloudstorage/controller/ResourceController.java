@@ -43,7 +43,7 @@ public class ResourceController {
     @PostMapping("/resource")
     public ResponseEntity<List<ResourceInfoDto>> uploadFile(
             @RequestParam String path,
-            @RequestPart("file") MultipartFile[] files) {
+            @RequestPart("object") MultipartFile[] files) {
         Long userId = userProvider.getCurrentUserId();
         List<ResourceInfoDto> result = resourceService.uploadFile(userId, path, files);
         return ResponseEntity.status(HttpStatus.CREATED).body(result);

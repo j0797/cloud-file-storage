@@ -63,6 +63,13 @@ public class ResourceServiceImpl implements ResourceService {
 
     @Override
     public List<ResourceInfoDto> listDirectory(Long userId, String path) {
+        if (path == null || path.isEmpty() || path.equals("/")) {
+            String rootKey = pathResolver.toStoragePath(userId, "");
+            List<StorageResource> resources = storage.list(rootKey, false);
+            return resources.stream()
+                    .map(resource -> resourceMapper.toDto(resource, userId))
+                    .collect(Collectors.toList());
+        }
         ResourcePath resourcePath = new ResourcePath(path);
         ensureDirectory(resourcePath);
         String storageKey = pathResolver.toStoragePath(userId, path);
@@ -96,14 +103,19 @@ public class ResourceServiceImpl implements ResourceService {
         if (files == null || files.length == 0) {
             throw new InvalidPathException("No files to upload");
         }
-        if (!path.endsWith("/") && !path.isEmpty()) {
-            path += "/";
+        String normalizedPath;
+        if (path == null || path.isEmpty() || path.equals("/")) {
+            normalizedPath = "";
+        } else {
+            normalizedPath = path.endsWith("/") ? path : path + "/";
+            ResourcePath resourcePath = new ResourcePath(normalizedPath);
+            ensureDirectory(resourcePath);
         }
 
-        ResourcePath resourcePath = new ResourcePath(path);
-        ensureDirectory(resourcePath);
-        String folderKey = pathResolver.toStoragePath(userId, path);
-        ensureExists(folderKey, "Target directory does not exist: " + path);
+        String folderKey = pathResolver.toStoragePath(userId, normalizedPath);
+        if (!normalizedPath.isEmpty()) {
+            ensureExists(folderKey, "Target directory does not exist: " + path);
+        }
         Map<String, MultipartFile> filesToUpload = buildUploadPlan(folderKey, files);
         return uploadFiles(filesToUpload, userId);
     }
