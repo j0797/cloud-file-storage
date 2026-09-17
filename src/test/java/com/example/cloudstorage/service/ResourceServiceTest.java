@@ -395,7 +395,7 @@ class ResourceServiceTest {
     }
 
     @Test
-    void shouldDownloadDirectoryAsZip() throws Exception {
+    void shouldDownloadDirectoryAsZipWithFlatStructure() throws Exception {
         Long userId = uniqueUserId();
         String folder = uniquePath();
         resourceService.createDirectory(userId, folder);
@@ -415,6 +415,29 @@ class ResourceServiceTest {
             }
             assertTrue(names.contains("one.txt"));
             assertTrue(names.contains("two.txt"));
+            assertEquals(2, names.size(), "The archive must contain exactly two files, without an extra folder entry.");
+        }
+    }
+
+    @Test
+    void shouldDownloadEmptyDirectoryAsValidZipWithFolderEntry() throws Exception {
+        Long userId = uniqueUserId();
+        String folder = uniquePath();
+        resourceService.createDirectory(userId, folder);
+
+        InputStreamResource resource = resourceService.downloadResource(userId, folder);
+
+        byte[] bytes = resource.getInputStream().readAllBytes();
+        assertTrue(bytes.length > 0, "Zip mustn't be empty.");
+
+        try (var zip = new java.util.zip.ZipInputStream(new java.io.ByteArrayInputStream(bytes))) {
+            var entries = new java.util.ArrayList<String>();
+            java.util.zip.ZipEntry entry;
+            while ((entry = zip.getNextEntry()) != null) {
+                entries.add(entry.getName());
+            }
+            assertEquals(1, entries.size(), "The archive should contain a single entry: the folder itself.");
+            assertTrue(entries.getFirst().endsWith("/"), "The entry must be a folder.");
         }
     }
 

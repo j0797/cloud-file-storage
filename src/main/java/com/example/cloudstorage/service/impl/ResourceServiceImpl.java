@@ -167,15 +167,27 @@ public class ResourceServiceImpl implements ResourceService {
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         try (ZipOutputStream zos = new ZipOutputStream(baos)) {
             List<StorageResource> children = storage.list(folderKey, true);
-            for (StorageResource child : children) {
-                String entryName = child.path().substring(folderKey.length());
-                if (entryName.isEmpty()) continue;
 
-                zos.putNextEntry(new ZipEntry(entryName));
-                try (InputStream is = storage.download(child.path())) {
-                    is.transferTo(zos);
+            if (children.isEmpty()) {
+                String normalizedKey = folderKey.endsWith("/")
+                        ? folderKey.substring(0, folderKey.length() - 1)
+                        : folderKey;
+                String rootName = normalizedKey.substring(normalizedKey.lastIndexOf('/') + 1);
+                if (!rootName.isEmpty()) {
+                    zos.putNextEntry(new ZipEntry(rootName + "/"));
+                    zos.closeEntry();
                 }
-                zos.closeEntry();
+            } else {
+                for (StorageResource child : children) {
+                    String entryName = child.path().substring(folderKey.length());
+                    if (entryName.isEmpty()) continue;
+
+                    zos.putNextEntry(new ZipEntry(entryName));
+                    try (InputStream is = storage.download(child.path())) {
+                        is.transferTo(zos);
+                    }
+                    zos.closeEntry();
+                }
             }
             zos.finish();
         } catch (IOException e) {
