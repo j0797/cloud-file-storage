@@ -6,8 +6,8 @@ import org.hibernate.validator.constraints.Length;
 
 public record UserRegisterDto(@NotBlank(message = "Login is required.")
                               @Length(
-                                      min = 6,
-                                      max = 50,
+                                      min = 5,
+                                      max = 20,
                                       message = "Login length must be between {min} and {max} characters."
                               )
                               @Pattern(
@@ -16,8 +16,14 @@ public record UserRegisterDto(@NotBlank(message = "Login is required.")
                               ) String username,
                               @NotBlank(message = "Password is required.")
                               @Length(
-                                      min = 6,
-                                      max = 255,
+                                      min = 5,
+                                      max = 20,
                                       message = "Password length must be between {min} and {max} characters."
-                              ) String password) {
+                              )
+                              @Pattern(
+                                      regexp = "^[a-zA-Z0-9!@#$%^&*(),.?\":{}|<>\\[\\]\\\\/`~+=-_';]*$",
+                                      message = "Password contains invalid characters."
+                              )
+                              String password
+) {
 }
