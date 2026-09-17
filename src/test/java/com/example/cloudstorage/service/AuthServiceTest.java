@@ -97,6 +97,6 @@ class AuthServiceTest {
     }
 
     private String uniqueUsername() {
-        return "user_" + UUID.randomUUID();
+        return "u" + UUID.randomUUID().toString().replace("-", "").substring(0, 15);
     }
 }

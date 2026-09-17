@@ -96,13 +96,13 @@ class UserServiceTest {
 
     @Test
     void shouldPreserveUsernameCase() {
-        String username = "John_" + UUID.randomUUID();
+        String username = "John_" + UUID.randomUUID().toString().replace("-", "").substring(0, 10);
         userService.createUser(username, "password123");
 
         assertEquals(username, userService.findByUsername(username).orElseThrow().getUsername());
     }
 
     private String uniqueUsername() {
-        return "user_" + UUID.randomUUID();
+        return "u" + UUID.randomUUID().toString().replace("-", "").substring(0, 15);
     }
 }
