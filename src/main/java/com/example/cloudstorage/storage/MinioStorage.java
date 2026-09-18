@@ -155,6 +155,27 @@ public class MinioStorage implements Storage {
 
     @Override
     public boolean exists(String path) {
-        return getInfo(path).isPresent();
+
+        if (getInfo(path).isPresent()) {
+            return true;
+        }
+
+        if (!path.endsWith("/")) {
+            return false;
+        }
+
+        try {
+            Iterable<Result<Item>> results = minioClient.listObjects(
+                    ListObjectsArgs.builder()
+                            .bucket(bucketName)
+                            .prefix(path)
+                            .recursive(true)
+                            .maxKeys(1)
+                            .build()
+            );
+            return results.iterator().hasNext();
+        } catch (Exception e) {
+            throw new StorageException("Failed to check existence: " + path, e);
+        }
     }
 }

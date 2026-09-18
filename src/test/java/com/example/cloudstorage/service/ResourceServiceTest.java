@@ -483,6 +483,33 @@ class ResourceServiceTest {
                 () -> resourceService.searchResources(userId, "   "));
     }
 
+    @Test
+    void shouldOpenVirtualDirectoryWithoutMarkerObject() {
+        Long userId = uniqueUserId();
+        String folder = uniquePath();
+        resourceService.createDirectory(userId, folder);
+        resourceService.uploadFile(userId, folder,
+                new MultipartFile[]{file("subfolder/file.txt", "content")});
+
+        List<ResourceInfoDto> contents = resourceService.listDirectory(userId, folder + "subfolder/");
+
+        assertEquals(1, contents.size());
+        assertEquals("file.txt", contents.getFirst().name());
+    }
+
+    @Test
+    void shouldDeleteVirtualDirectoryWithoutMarkerObject() {
+        Long userId = uniqueUserId();
+        String folder = uniquePath();
+        resourceService.createDirectory(userId, folder);
+        resourceService.uploadFile(userId, folder,
+                new MultipartFile[]{file("subfolder/file.txt", "content")});
+        resourceService.deleteResource(userId, folder + "subfolder/");
+
+        assertThrows(ResourceNotFoundException.class,
+                () -> resourceService.listDirectory(userId, folder + "subfolder/"));
+    }
+
     private MultipartFile file(String name, String content) {
         return new MockMultipartFile("file", name, "text/plain", content.getBytes());
     }
