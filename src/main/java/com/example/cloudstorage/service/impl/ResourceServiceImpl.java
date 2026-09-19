@@ -1,5 +1,6 @@
 package com.example.cloudstorage.service.impl;
 
+import com.example.cloudstorage.domain.ResourceNameValidator;
 import com.example.cloudstorage.domain.ResourcePath;
 import com.example.cloudstorage.domain.StorageResource;
 import com.example.cloudstorage.dto.ResourceInfoDto;
@@ -259,6 +260,7 @@ public class ResourceServiceImpl implements ResourceService {
             if (originalName == null || originalName.isBlank()) {
                 continue;
             }
+            ResourceNameValidator.validatePathSegments(originalName);
             String fileKey = folderKey + originalName;
             ensureNotExists(fileKey, "File already exists: " + originalName);
             filesToUpload.put(fileKey, file);

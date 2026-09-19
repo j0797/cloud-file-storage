@@ -70,6 +70,7 @@ public record ResourcePath(String path) {
         if (containsPathTraversal(path)) {
             throw new InvalidPathException("Path traversal ('..') is not allowed");
         }
+        ResourceNameValidator.validatePathSegments(path);
     }
 
     private static boolean containsPathTraversal(String path) {
