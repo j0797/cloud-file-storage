@@ -510,6 +510,58 @@ class ResourceServiceTest {
                 () -> resourceService.listDirectory(userId, folder + "subfolder/"));
     }
 
+    @Test
+    void shouldThrowWhenDirectoryNameContainsForbiddenChars() {
+        Long userId = uniqueUserId();
+
+        assertThrows(InvalidPathException.class,
+                () -> resourceService.createDirectory(userId, "bad*name/"));
+        assertThrows(InvalidPathException.class,
+                () -> resourceService.createDirectory(userId, "bad?name/"));
+        assertThrows(InvalidPathException.class,
+                () -> resourceService.createDirectory(userId, "bad:name/"));
+        assertThrows(InvalidPathException.class,
+                () -> resourceService.createDirectory(userId, "bad|name/"));
+    }
+
+    @Test
+    void shouldThrowWhenDirectoryNameTooLong() {
+        Long userId = uniqueUserId();
+        String longName = "a".repeat(201) + "/";
+
+        assertThrows(InvalidPathException.class,
+                () -> resourceService.createDirectory(userId, longName));
+    }
+
+    @Test
+    void shouldAcceptDirectoryNameOfMaxLength() {
+        Long userId = uniqueUserId();
+        String maxName = "a".repeat(200) + "/";
+
+        assertDoesNotThrow(() -> resourceService.createDirectory(userId, maxName));
+    }
+
+    @Test
+    void shouldThrowWhenUploadedFileNameContainsForbiddenChars() {
+        Long userId = uniqueUserId();
+        String folder = uniquePath();
+        resourceService.createDirectory(userId, folder);
+
+        assertThrows(InvalidPathException.class,
+                () -> resourceService.uploadFile(userId, folder,
+                        new MultipartFile[]{file("bad*name.txt", "x")}));
+    }
+
+    @Test
+    void shouldThrowWhenNestedSegmentInvalid() {
+        Long userId = uniqueUserId();
+        String folder = uniquePath();
+        resourceService.createDirectory(userId, folder);
+
+        assertThrows(InvalidPathException.class,
+                () -> resourceService.createDirectory(userId, folder + "bad?name/"));
+    }
+
     private MultipartFile file(String name, String content) {
         return new MockMultipartFile("file", name, "text/plain", content.getBytes());
     }
