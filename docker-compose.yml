@@ -24,9 +24,20 @@ services:
     command: server /data --console-address ":9001"
     restart: unless-stopped
 
+  redis:
+    image: redis:7
+    ports:
+      - "${REDIS_PORT}:6379"
+    volumes:
+      - redis_data:/data
+    restart: unless-stopped
+
 volumes:
   postgres_data:
     name: cloud_file_storage_postgres_data
 
   minio_data:
     name: cloud_file_storage_minio_data
+
+  redis_data:
+    name: cloud_file_storage_redis_data
