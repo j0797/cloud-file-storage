@@ -4,6 +4,11 @@ spring:
     username: ${DB_USERNAME:postgres_user}
     password: ${DB_PASSWORD:postgres_password}
 
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+
 minio:
   url: ${MINIO_URL:http://localhost:9000}
   root:
