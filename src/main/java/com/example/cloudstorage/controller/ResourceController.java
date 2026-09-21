@@ -40,7 +40,7 @@ public class ResourceController {
         return ResponseEntity.noContent().build();
     }
 
-    @PostMapping("/resource")
+    @PostMapping(value = "/resource", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<List<ResourceInfoDto>> uploadFile(
             @RequestParam String path,
             @RequestPart("object") MultipartFile[] files) {

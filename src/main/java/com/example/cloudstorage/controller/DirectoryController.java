@@ -29,7 +29,8 @@ public class DirectoryController {
     }
 
     @GetMapping("/directory")
-    public ResponseEntity<List<ResourceInfoDto>> listDirectory(@RequestParam String path) {
+    public ResponseEntity<List<ResourceInfoDto>> listDirectory(
+            @RequestParam(required = false) String path) {
         Long userId = userProvider.getCurrentUserId();
         List<ResourceInfoDto> result = resourceService.listDirectory(userId, path);
         return ResponseEntity.ok(result);
