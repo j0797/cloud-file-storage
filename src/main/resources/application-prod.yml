@@ -23,3 +23,9 @@ logging:
   logback:
     rollingpolicy:
       file-name-pattern: /app/logs/archive/cloud-file-storage.%d{yyyy-MM-dd}.%i.log.gz
+
+springdoc:
+  api-docs:
+    enabled: false
+  swagger-ui:
+    enabled: false
