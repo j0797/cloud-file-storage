@@ -19,11 +19,6 @@ minio:
 logging:
   level:
     root: INFO
-  file:
-    name: /app/logs/cloud-file-storage.log
-  logback:
-    rollingpolicy:
-      file-name-pattern: /app/logs/archive/cloud-file-storage.%d{yyyy-MM-dd}.%i.log.gz
 
 springdoc:
   api-docs:

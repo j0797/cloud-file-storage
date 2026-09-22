@@ -74,6 +74,11 @@ services:
       REDIS_PORT: 6379
     networks:
       - internal
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
 
   caddy:
     image: caddy:2-alpine

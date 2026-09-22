@@ -15,9 +15,14 @@ import org.springframework.security.web.context.HttpSessionSecurityContextReposi
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 @Service
 @Transactional
 public class AuthServiceImpl implements AuthService {
+
+    private static final Logger log = LoggerFactory.getLogger(AuthServiceImpl.class);
 
     private final UserService userService;
     private final AuthenticationManager authenticationManager;
@@ -31,12 +36,14 @@ public class AuthServiceImpl implements AuthService {
 
     @Override
     public void register(UserRegisterDto userRegisterDto) {
+        log.info("Registering new user: {}", userRegisterDto.username());
         userService.createUser(userRegisterDto.username(), userRegisterDto.password());
         authenticate(new UserLoginDto(userRegisterDto.username(), userRegisterDto.password()));
     }
 
     @Override
     public void authenticate(UserLoginDto userLoginDto) {
+        log.info("Login attempt: {}", userLoginDto.username());
         Authentication authentication = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(userLoginDto.username(), userLoginDto.password())
         );

@@ -25,8 +25,13 @@ import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 @Service
 public class ResourceServiceImpl implements ResourceService {
+
+    private static final Logger log = LoggerFactory.getLogger(ResourceServiceImpl.class);
 
     private final Storage storage;
     private final UserStoragePathResolver pathResolver;
@@ -45,6 +50,7 @@ public class ResourceServiceImpl implements ResourceService {
         String folderKey = pathResolver.toStoragePath(userId, path);
         ensureNotExists(folderKey, "Resource already exists");
         ensureParentExists(userId, resourcePath.parentPath());
+        log.info("Create directory '{}' by user {}", path, userId);
 
         storage.createDirectory(folderKey);
 
@@ -86,6 +92,7 @@ public class ResourceServiceImpl implements ResourceService {
         ResourcePath resourcePath = new ResourcePath(path);
         String storageKey = pathResolver.toStoragePath(userId, path);
         ensureExists(storageKey, "Resource not found: " + path);
+        log.info("Delete '{}' by user {}", path, userId);
 
         if (resourcePath.isDirectory()) {
             List<StorageResource> children = storage.list(storageKey, true);
@@ -117,6 +124,7 @@ public class ResourceServiceImpl implements ResourceService {
         if (!normalizedPath.isEmpty()) {
             ensureExists(folderKey, "Target directory does not exist: " + path);
         }
+        log.info("Upload {} file(s) to '{}' by user {}", files.length, normalizedPath, userId);
         Map<String, MultipartFile> filesToUpload = buildUploadPlan(folderKey, files);
         return uploadFiles(filesToUpload, userId);
     }
@@ -142,6 +150,7 @@ public class ResourceServiceImpl implements ResourceService {
         String fromKey = pathResolver.toStoragePath(userId, fromPath);
         String toKey = pathResolver.toStoragePath(userId, toPath);
         validateMove(fromResourcePath, toResourcePath, fromKey, toKey, userId, toResourcePath.parentPath());
+        log.info("Move '{}' -> '{}' by user {}", fromPath, toPath, userId);
 
         if (fromResourcePath.isDirectory()) {
             moveDirectory(fromKey, toKey);
