@@ -22,6 +22,10 @@ logging:
 
 springdoc:
   api-docs:
-    enabled: false
+    enabled: true
+    path: /api/v3/api-docs
   swagger-ui:
-    enabled: false
+    enabled: true
+    path: /api/swagger-ui.html
+    config-url: /api/v3/api-docs/swagger-config
+    url: /api/v3/api-docs
