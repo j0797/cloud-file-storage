@@ -10,7 +10,8 @@ spring:
       port: ${REDIS_PORT}
 
 minio:
-  url: https://${MINIO_HOST}:${MINIO_API_PORT}
+  url: http://${MINIO_HOST}:${MINIO_API_PORT}
+  bucket-name: ${MINIO_BUCKET_NAME}
   root:
     user: ${MINIO_ROOT_USER}
     password: ${MINIO_ROOT_PASSWORD}
