@@ -5,13 +5,11 @@ import com.example.cloudstorage.dto.ResourceInfoDto;
 import com.example.cloudstorage.security.UserProvider;
 import com.example.cloudstorage.service.ResourceService;
 import org.springframework.core.io.InputStreamResource;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.*;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 @RestController
@@ -75,8 +73,12 @@ public class ResourceController {
             filename += ".zip";
         }
 
+        ContentDisposition contentDisposition = ContentDisposition.attachment()
+                .filename(filename, StandardCharsets.UTF_8)
+                .build();
+
         return ResponseEntity.ok()
-                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + filename + "\"")
+                .header(HttpHeaders.CONTENT_DISPOSITION, contentDisposition.toString())
                 .contentType(MediaType.APPLICATION_OCTET_STREAM)
                 .body(resource);
     }
